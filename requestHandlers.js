@@ -2,6 +2,10 @@ var querystring = require("querystring"),
   fs = require("fs"),
   formidable = require("formidable");
 
+var UPLOAD_DIR = './tmp';
+var UPLOAD_FILENAME = '/test.png';
+var UPLOADED_FILE = UPLOAD_DIR + UPLOAD_FILENAME;
+
 function start(response, request) {
   console.log("Request handler 'start' was called.");
 
@@ -27,15 +31,18 @@ function upload(response, request) {
   console.log("Request handler 'upload' was called.");
   var form = new formidable.IncomingForm();
   console.log("about to parse");
+  form.uploadDir = UPLOAD_DIR;
+
   form.parse(request, function(error, fields, files) {
     console.log("parsing done");
 
     /* Possible error on Windows systems:
        tried to rename to an already existing file */
-    fs.rename(files.upload.path, "./test.jpg", function(err) {
+
+    fs.rename(files.upload.path, UPLOADED_FILE, function(err) {
       if (err) {
-        fs.unlink("./test.jpg");
-        fs.rename(files.upload.path, "/tmp/test.jpg");
+        fs.unlink(UPLOADED_FILE);
+        fs.rename(files.upload.path, UPLOADED_FILE);
       }
     });
     response.writeHead(200, {"Content-Type": "text/html"});
@@ -47,13 +54,13 @@ function upload(response, request) {
 
 function show(response, request) {
   console.log("Request handler 'show' was called.");
-  fs.readFile("./test.jpg", "binary", function(error, file) {
+  fs.readFile(UPLOADED_FILE, "binary", function(error, file) {
     if(error) {
       response.writeHead(500, {"Content-Type": "text/plain"});
       response.write(error + "\n");
       response.end();
     } else {
-      response.writeHead(200, {"Content-Type": "image/jpg"});
+      response.writeHead(200, {"Content-Type": "image/png"});
       response.write(file, "binary");
       response.end();
     }
